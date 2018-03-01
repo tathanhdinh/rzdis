@@ -1,0 +1,10 @@
+[package]
+name = "rzdis"
+version = "0.1.0"
+authors = ["tathanhdinh"]
+
+[dependencies]
+# zydis = "*"
+zydis = { path = "../zydis-rs" }
+clap = "*"
+tabwriter = "*"
