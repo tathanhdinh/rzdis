@@ -64,7 +64,115 @@ pub trait ZydisInstructionOpcodeMapMethods {
 
 impl ZydisInstructionOpcodeMapMethods for zydis::gen::ZydisOpcodeMaps {
     fn get_string(self) -> Option<&'static str> {
+        match self {
+            zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT => {
+                Some("default")
+            }
 
+            zydis::gen::ZYDIS_OPCODE_MAP_0F => {
+                Some("0F")
+            },
+
+            zydis::gen::ZYDIS_OPCODE_MAP_0F38 => {
+                Some("0F38")
+            },
+
+            zydis::gen::ZYDIS_OPCODE_MAP_0F3A => {
+                Some("0F3A")
+            },
+
+            zydis::gen::ZYDIS_OPCODE_MAP_0F0F => {
+                Some("0F0F")
+            },
+
+            zydis::gen::ZYDIS_OPCODE_MAP_XOP8 => {
+                Some("XOP8")
+            },
+
+            zydis::gen::ZYDIS_OPCODE_MAP_XOP9 => {
+                Some("XOP9")
+            },
+
+            zydis::gen::ZYDIS_OPCODE_MAP_XOPA => {
+                Some("XOPA")
+            },
+
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+fn ZydisExceptionClassGetString(zydis::gen::ZydisExceptionClasses ec) -> Option<&'static str> {
+    match ec {
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE => {
+            Some("None")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1 => {
+            Some("SSE1")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2 => {
+            Some("SSE2")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3 => {
+            Some("SSE3")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4 => {
+            Some("SSE4")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5 => {
+            Some("SSE5")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7 => {
+            Some("SSE7")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1 => {
+            Some("AVX1")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2 => {
+            Some("AVX2")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3 => {
+            Some("AVX3")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX4 => {
+            Some("AVX4")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5 => {
+            Some("AVX5")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6 => {
+            Some("AVX6")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7 => {
+            Some("AVX7")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8 => {
+            Some("AVX8")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11 => {
+            Some("AVX11")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12 => {
+            Some("AVX12")
+        },
     }
 }
 
@@ -144,21 +252,54 @@ fn main() {
         let mut disasm_results: Vec<_> = Vec::new();
         for (mut ins, ins_address) in decoder.instruction_iterator(&opcode, base_address) {
             if let Ok(formatted_ins) = formatter.format_instruction(&mut ins, 30, None) {
-                let disasm_result = format!("0x{:x}\t{}", ins_address, formatted_ins);
+                // let ins_opcode = ins.data[0..ins.length];
+                // let data = ins.data.into_iter().take(ins.length as usize);
+                // let data = data[0..3];
+                let ins_opcode = ins.data
+                    .into_iter()
+                    .take(ins.length as usize)
+                    .map(|opc| format!("{:02x}", opc))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+
+                let disasm_result = format!("0x{:x}\t{}\t{}\t", ins_address, ins_opcode, formatted_ins);
                 disasm_results.push(disasm_result);
 
                 match detail_level {
                     1 => {
                         let mnemonic = zydis::mnemonic::ZydisMnemonicMethods::get_string(ins.mnemonic as zydis::gen::ZydisMnemonics).unwrap();
                         let encoding = ZydisInstructionEncodingMethods::get_string(ins.encoding as zydis::gen::ZydisInstructionEncodings).unwrap();
-                        let opcode_map = ins.opcodeMap as zydis::gen::ZydisOpcodeMaps;
+                        let opcode_map = ZydisInstructionOpcodeMapMethods::get_string(ins.opcodeMap as zydis::gen::ZydisOpcodeMaps).unwrap();
                         let opcode = ins.opcode;
-                        // let basic_info = format("mnemonic: {] [encoding: {}, ]")
-                        // let mnemonic = ((ins.mnemonic as zydis::gen::ZydisMnemonics) as zydis::mnemonic::ZydisMnemonicMethods).get_string();
-                        // let encoding = (ins.encoding as zydis::gen::ZydisInstructionEncodings;
-                        // let mnem = zydis::gen::ZYDIS_MNEMONIC_CMOVP.get_string();
-                        // let m = mnemonic.get_string();
+                        // let basic_info = format!("\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode);
+                        // disasm_results.push(basic_info);
+                        disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
+                        disasm_results.push(format!("\t\t\tlength:\t{}", ins.length));
+                        disasm_results.push(format!("\t\t\tstack width:\t{}", ins.stackWidth));
+                        disasm_results.push(format!("\t\t\toperand width:\t{}", ins.operandWidth));
+                        disasm_results.push(format!("\t\t\taddress width:\t{}", ins.addressWidth));
+
+                        let category = unsafe { 
+                            std::ffi::CStr::from_ptr(zydis::gen::ZydisCategoryGetString(ins.meta.category)).to_string_lossy()
+                        };
+                        disasm_results.push(format!("\t\t\tcategory:\t{}", category));
+
+                        let isa_set = unsafe {
+                            std::ffi::CStr::from_ptr(zydis::gen::ZydisISASetGetString(ins.meta.isaSet)).to_string_lossy()
+                        };
+                        disasm_results.push(format!("\t\t\tisa set:\t{}", isa_set));
+
+                        let isa_ext = unsafe {
+                            std::ffi::CStr::from_ptr(zydis::gen::ZydisISAExtGetString(ins.meta.isaExt)).to_string_lossy()
+                        };
+                        disasm_results.push(format!("\t\t\tisa extension:\t{}", isa_ext));
+
+                        let exception_class = ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses;
                     },
+
+                    2 => {
+
+                    }
 
                     _ => {
 
