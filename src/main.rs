@@ -4,7 +4,6 @@ extern crate clap;
 extern crate tabwriter;
 
 use std::io::Write;
-// use zydis::mnemonic::ZydisMnemonicMethods;
 
 static APPLICATION_NAME: &'static str = "rzdis";
 static APPLICATION_VERSION: &'static str = "0.1.0";
