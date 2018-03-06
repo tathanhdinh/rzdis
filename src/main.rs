@@ -4,6 +4,7 @@ extern crate zydis;
 // #[macro_use]
 extern crate clap;
 extern crate tabwriter;
+#[macro_use]
 extern crate bitflags;
 
 use std::io::Write;
@@ -273,6 +274,57 @@ fn ZydisExceptionClassGetString(ec: zydis::gen::ZydisExceptionClasses) -> Option
         }
     }
 }
+
+bitflags! {
+    struct InstructionAttributeFlag: u64 {
+        const ZYDIS_ATTRIB_HAS_MODRM = zydis::gen::ZYDIS_ATTRIB_HAS_MODRM as u64;
+        const ZYDIS_ATTRIB_HAS_SIB = zydis::gen::ZYDIS_ATTRIB_HAS_SIB as u64;
+        const ZYDIS_ATTRIB_HAS_REX = zydis::gen::ZYDIS_ATTRIB_HAS_REX as u64;
+        const ZYDIS_ATTRIB_HAS_XOP = zydis::gen::ZYDIS_ATTRIB_HAS_XOP as u64;
+        const ZYDIS_ATTRIB_HAS_VEX = zydis::gen::ZYDIS_ATTRIB_HAS_VEX as u64;
+        const ZYDIS_ATTRIB_HAS_EVEX = zydis::gen::ZYDIS_ATTRIB_HAS_EVEX as u64;
+        const ZYDIS_ATTRIB_HAS_MVEX = zydis::gen::ZYDIS_ATTRIB_HAS_MVEX as u64;
+        const ZYDIS_ATTRIB_IS_RELATIVE = zydis::gen::ZYDIS_ATTRIB_IS_RELATIVE as u64;
+        const ZYDIS_ATTRIB_IS_PRIVILEGED = zydis::gen::ZYDIS_ATTRIB_IS_PRIVILEGED as u64;
+        const ZYDIS_ATTRIB_IS_FAR_BRANCH = zydis::gen::ZYDIS_ATTRIB_IS_FAR_BRANCH as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_LOCK = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_LOCK as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REP = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REP as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REPE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPE as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REPZ = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPZ as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REPPNE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPZ as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REPNZ = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPZ as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_BOUND = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_BOUND as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_XACQUIRE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_XACQUIRE as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_XRELEASE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_XRELEASE as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_HLE_WITHOUT_LOCK = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_HLE_WITHOUT_LOCK as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_BRANCH_HINTS = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_BRANCH_HINTS as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_SEGMENT = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_SEGMENT as u64;
+        const ZYDIS_ATTRIB_HAS_LOCK = zydis::gen::ZYDIS_ATTRIB_HAS_LOCK as u64;
+        const ZYDIS_ATTRIB_HAS_REP = zydis::gen::ZYDIS_ATTRIB_HAS_REP as u64;
+        const ZYDIS_ATTRIB_HAS_REPE = zydis::gen::ZYDIS_ATTRIB_HAS_REPE as u64;
+        const ZYDIS_ATTRIB_HAS_REPZ = zydis::gen::ZYDIS_ATTRIB_HAS_REPZ as u64;
+        const ZYDIS_ATTRIB_HAS_REPNE = zydis::gen::ZYDIS_ATTRIB_HAS_REPNE as u64;
+        const ZYDIS_ATTRIB_HAS_REPNZ = zydis::gen::ZYDIS_ATTRIB_HAS_REPNZ as u64;
+        const ZYDIS_ATTRIB_HAS_BOUND = zydis::gen::ZYDIS_ATTRIB_HAS_BOUND as u64;
+        const ZYDIS_ATTRIB_HAS_XACQUIRE = zydis::gen::ZYDIS_ATTRIB_HAS_XACQUIRE as u64;
+        const ZYDIS_ATTRIB_HAS_XRELEASE = zydis::gen::ZYDIS_ATTRIB_HAS_XRELEASE as u64;
+        const ZYDIS_ATTRIB_HAS_BRANCH_NOT_TAKEN = zydis::gen::ZYDIS_ATTRIB_HAS_BRANCH_NOT_TAKEN as u64;
+        const ZYDIS_ATTRIB_HAS_BRANCH_TAKEN = zydis::gen::ZYDIS_ATTRIB_HAS_BRANCH_TAKEN as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT_CS = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT_CS as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT_SS = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT_SS as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT_DS = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT_DS as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT_ES = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT_ES as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT_FS = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT_FS as u64;
+        const ZYDIS_ATTRIB_HAS_SEGMENT_GS = zydis::gen::ZYDIS_ATTRIB_HAS_SEGMENT_GS as u64;
+        const ZYDIS_ATTRIB_HAS_OPERANDSIZE = zydis::gen::ZYDIS_ATTRIB_HAS_OPERANDSIZE as u64;
+        const ZYDIS_ATTRIB_HAS_ADDRESSSIZE = zydis::gen::ZYDIS_ATTRIB_HAS_ADDRESSSIZE as u64;
+    }
+}
+
+// fn ZydisInstructionAttributesGetStrings(atts: zydis::gen::ZydisInstructionAttributes) -> Vec<&'static str> {
+
+// }
 
 fn main() {
     let matches = clap::App::new(APPLICATION_NAME)
