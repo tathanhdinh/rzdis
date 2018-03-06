@@ -8,3 +8,4 @@ authors = ["tathanhdinh"]
 zydis = { path = "../zydis-rs" }
 clap = "*"
 tabwriter = "*"
+bitflags = "*"

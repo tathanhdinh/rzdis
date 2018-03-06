@@ -1,7 +1,10 @@
+#![allow(non_snake_case)]
+
 extern crate zydis;
 // #[macro_use]
 extern crate clap;
 extern crate tabwriter;
+extern crate bitflags;
 
 use std::io::Write;
 
@@ -103,7 +106,7 @@ impl ZydisInstructionOpcodeMapMethods for zydis::gen::ZydisOpcodeMaps {
     }
 }
 
-fn ZydisExceptionClassGetString(zydis::gen::ZydisExceptionClasses ec) -> Option<&'static str> {
+fn ZydisExceptionClassGetString(ec: zydis::gen::ZydisExceptionClasses) -> Option<&'static str> {
     match ec {
         zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE => {
             Some("None")
@@ -172,6 +175,102 @@ fn ZydisExceptionClassGetString(zydis::gen::ZydisExceptionClasses ec) -> Option<
         zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12 => {
             Some("AVX12")
         },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E1 => {
+            Some("E1")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF => {
+            Some("E1NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E2 => {
+            Some("E2")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF => {
+            Some("E2NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E3 => {
+            Some("E3")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF => {
+            Some("E3NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E4 => {
+            Some("E4")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF => {
+            Some("E4NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E5 => {
+            Some("E5")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF => {
+            Some("E5NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E6 => {
+            Some("E6")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF => {
+            Some("E6NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM => {
+            Some("E7NM")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128 => {
+            Some("E7NM128")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF => {
+            Some("E9NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E10 => {
+            Some("E10")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF => {
+            Some("E10NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E11 => {
+            Some("E11")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF => {
+            Some("E11NF")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E12 => {
+            Some("E12")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP => {
+            Some("E12NP")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_K20 => {
+            Some("K20")
+        },
+
+        zydis::gen::ZYDIS_EXCEPTION_CLASS_K21 => {
+            Some("K21")
+        },
+
+        _ => {
+            None
+        }
     }
 }
 
@@ -293,7 +392,10 @@ fn main() {
                         };
                         disasm_results.push(format!("\t\t\tisa extension:\t{}", isa_ext));
 
-                        let exception_class = ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses;
+                        let exception_class = ZydisExceptionClassGetString(ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses).unwrap();
+                        disasm_results.push(format!("\t\t\texception class:\t{}", exception_class));
+
+                        let attributes = ins.attributes;
                     },
 
                     2 => {
