@@ -9,3 +9,4 @@ zydis = { path = "../zydis-rs" }
 clap = "*"
 tabwriter = "*"
 bitflags = "*"
+lazy_static = "*"

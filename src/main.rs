@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
 
 extern crate zydis;
 // #[macro_use]
@@ -6,6 +7,8 @@ extern crate clap;
 extern crate tabwriter;
 #[macro_use]
 extern crate bitflags;
+#[macro_use]
+extern crate lazy_static;
 
 use std::io::Write;
 
@@ -18,6 +21,15 @@ static ARGUMENT_OPCODE: &'static str = "x86 opcode";
 static ARGUMENT_BASE: &'static str = "base address";
 static ARGUMENT_MODE: &'static str = "disassembling mode";
 static ARGUMENT_DETAIL: &'static str = "show instruction details";
+
+lazy_static! {
+    static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, 
+                                                                    &'static str> = {
+        let mut hm = std::collections::HashMap::new();
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
+        hm
+    };
+}
 
 pub trait ZydisInstructionEncodingMethods {
     fn get_string(self) -> Option<&'static str>;
