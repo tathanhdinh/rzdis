@@ -23,10 +23,16 @@ static ARGUMENT_MODE: &'static str = "disassembling mode";
 static ARGUMENT_DETAIL: &'static str = "show instruction details";
 
 lazy_static! {
-    static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, 
+    static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
                                                                     &'static str> = {
         let mut hm = std::collections::HashMap::new();
         hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
+        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
         hm
     };
 }
@@ -37,40 +43,61 @@ pub trait ZydisInstructionEncodingMethods {
 
 impl ZydisInstructionEncodingMethods for zydis::gen::ZydisInstructionEncodings {
     fn get_string(self) -> Option<&'static str> {
-        match self {
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => {
-                Some("invalid")
-            },
+        InstructionEncodingMethod.get(&self).map(|x| *x)
+        // match InstructionEncodingMethod.get(&self) {
+        //     Some(x) => Some(*x),
+        //     None => None
+        // }
+        // match self {
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => {
+        //         Some("invalid")
+        //     },
             
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => {
-                Some("default")
-            },
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => {
+        //         Some("default")
+        //     },
             
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => {
-                Some("3DNow")
-            },
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => {
+        //         Some("3DNow")
+        //     },
             
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => {
-                Some("XOP")
-            },
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => {
+        //         Some("XOP")
+        //     },
 
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => {
-                Some("VEX")
-            },
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => {
+        //         Some("VEX")
+        //     },
 
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => {
-                Some("EVEX")
-            },
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => {
+        //         Some("EVEX")
+        //     },
 
-            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => {
-                Some("MVEX")
-            },
+        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => {
+        //         Some("MVEX")
+        //     },
 
-            _ => {
-                None
-            }
-        }
+        //     _ => {
+        //         None
+        //     }
+        // }
     }
+}
+
+lazy_static! {
+    static ref InstructionOpcodeMapMethod: std::collections::HashMap<zydis::gen::ZydisOpcodeMaps, 
+                                                                     &'static str> = {
+        let mut hm = std::collections::HashMap::new();
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT, "default");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F, "0F");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F38, "0F38");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F3A, "0F3A");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F0F, "0F0F");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOP8, "XOP8");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOP9, "XOP9");
+        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOPA, "XOPA");
+        hm
+    };
 }
 
 pub trait ZydisInstructionOpcodeMapMethods {
@@ -79,43 +106,44 @@ pub trait ZydisInstructionOpcodeMapMethods {
 
 impl ZydisInstructionOpcodeMapMethods for zydis::gen::ZydisOpcodeMaps {
     fn get_string(self) -> Option<&'static str> {
-        match self {
-            zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT => {
-                Some("default")
-            }
+        InstructionOpcodeMapMethod.get(&self).map(|x| *x)
+        // match self {
+        //     zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT => {
+        //         Some("default")
+        //     }
 
-            zydis::gen::ZYDIS_OPCODE_MAP_0F => {
-                Some("0F")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_0F => {
+        //         Some("0F")
+        //     },
 
-            zydis::gen::ZYDIS_OPCODE_MAP_0F38 => {
-                Some("0F38")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_0F38 => {
+        //         Some("0F38")
+        //     },
 
-            zydis::gen::ZYDIS_OPCODE_MAP_0F3A => {
-                Some("0F3A")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_0F3A => {
+        //         Some("0F3A")
+        //     },
 
-            zydis::gen::ZYDIS_OPCODE_MAP_0F0F => {
-                Some("0F0F")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_0F0F => {
+        //         Some("0F0F")
+        //     },
 
-            zydis::gen::ZYDIS_OPCODE_MAP_XOP8 => {
-                Some("XOP8")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_XOP8 => {
+        //         Some("XOP8")
+        //     },
 
-            zydis::gen::ZYDIS_OPCODE_MAP_XOP9 => {
-                Some("XOP9")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_XOP9 => {
+        //         Some("XOP9")
+        //     },
 
-            zydis::gen::ZYDIS_OPCODE_MAP_XOPA => {
-                Some("XOPA")
-            },
+        //     zydis::gen::ZYDIS_OPCODE_MAP_XOPA => {
+        //         Some("XOPA")
+        //     },
 
-            _ => {
-                None
-            }
-        }
+        //     _ => {
+        //         None
+        //     }
+        // }
     }
 }
 
@@ -372,9 +400,7 @@ fn main() {
                 (zydis::gen::ZYDIS_ADDRESS_WIDTH_64, zydis::gen::ZYDIS_MACHINE_MODE_LONG_64)
             },
             _ => {
-                // println!("{}", "bad disassembling mode (should be either x32 or x64)");
                 unreachable!();
-                // return;
             }
         }
     }
