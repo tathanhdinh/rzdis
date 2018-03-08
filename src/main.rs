@@ -5,10 +5,9 @@ extern crate zydis;
 // #[macro_use]
 extern crate clap;
 extern crate tabwriter;
-#[macro_use]
-extern crate bitflags;
-#[macro_use]
-extern crate lazy_static;
+#[macro_use] extern crate bitflags;
+#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate maplit;
 
 use std::io::Write;
 
@@ -25,15 +24,23 @@ static ARGUMENT_DETAIL: &'static str = "show instruction details";
 lazy_static! {
     static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
                                                                     &'static str> = {
-        let mut hm = std::collections::HashMap::new();
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
-        hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
-        hm
+        // let mut hm = std::collections::HashMap::new();
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
+        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
+        hashmap! {
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => "invalid",
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => "default",
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => "3DNow",
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => "XOP",
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => "VEX",
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => "EVEX",
+            zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => "EVEX",
+        }
     };
 }
 
@@ -107,212 +114,57 @@ pub trait ZydisInstructionOpcodeMapMethods {
 impl ZydisInstructionOpcodeMapMethods for zydis::gen::ZydisOpcodeMaps {
     fn get_string(self) -> Option<&'static str> {
         InstructionOpcodeMapMethod.get(&self).map(|x| *x)
-        // match self {
-        //     zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT => {
-        //         Some("default")
-        //     }
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_0F => {
-        //         Some("0F")
-        //     },
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_0F38 => {
-        //         Some("0F38")
-        //     },
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_0F3A => {
-        //         Some("0F3A")
-        //     },
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_0F0F => {
-        //         Some("0F0F")
-        //     },
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_XOP8 => {
-        //         Some("XOP8")
-        //     },
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_XOP9 => {
-        //         Some("XOP9")
-        //     },
-
-        //     zydis::gen::ZYDIS_OPCODE_MAP_XOPA => {
-        //         Some("XOPA")
-        //     },
-
-        //     _ => {
-        //         None
-        //     }
-        // }
     }
 }
 
+lazy_static! {
+    static ref InstructionExceptionClass: std::collections::HashMap<zydis::gen::ZydisExceptionClasses, &'static str> = {
+        let mut hm = std::collections::HashMap::new();
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE, "None");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1, "SSE1");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2, "SSE2");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3, "SSE3");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4, "SSE4");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5, "SSE5");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7, "SSE7");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1, "AVX1");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2, "AVX2");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3, "AVX3");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5, "AVX4");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6, "AVX6");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7, "AVX7");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8, "AVX8");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11, "AVX11");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12, "AVX12");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1, "E1");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF, "E1NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2, "E2");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF, "E2NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3, "E3");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF, "E3NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4, "E4");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF, "E4NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5, "E5");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF, "E5NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6, "E6");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF, "E6NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM, "E7NM");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128, "E7NM128");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF, "E9NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10, "E10");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF, "E10NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11, "E6");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF, "E6NF");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12, "E12");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP, "E12NP");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K20, "K20");
+        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K21, "K21");
+        hm
+    };
+}
+
 fn ZydisExceptionClassGetString(ec: zydis::gen::ZydisExceptionClasses) -> Option<&'static str> {
-    match ec {
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE => {
-            Some("None")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1 => {
-            Some("SSE1")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2 => {
-            Some("SSE2")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3 => {
-            Some("SSE3")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4 => {
-            Some("SSE4")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5 => {
-            Some("SSE5")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7 => {
-            Some("SSE7")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1 => {
-            Some("AVX1")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2 => {
-            Some("AVX2")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3 => {
-            Some("AVX3")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX4 => {
-            Some("AVX4")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5 => {
-            Some("AVX5")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6 => {
-            Some("AVX6")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7 => {
-            Some("AVX7")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8 => {
-            Some("AVX8")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11 => {
-            Some("AVX11")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12 => {
-            Some("AVX12")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E1 => {
-            Some("E1")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF => {
-            Some("E1NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E2 => {
-            Some("E2")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF => {
-            Some("E2NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E3 => {
-            Some("E3")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF => {
-            Some("E3NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E4 => {
-            Some("E4")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF => {
-            Some("E4NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E5 => {
-            Some("E5")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF => {
-            Some("E5NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E6 => {
-            Some("E6")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF => {
-            Some("E6NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM => {
-            Some("E7NM")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128 => {
-            Some("E7NM128")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF => {
-            Some("E9NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E10 => {
-            Some("E10")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF => {
-            Some("E10NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E11 => {
-            Some("E11")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF => {
-            Some("E11NF")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E12 => {
-            Some("E12")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP => {
-            Some("E12NP")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_K20 => {
-            Some("K20")
-        },
-
-        zydis::gen::ZYDIS_EXCEPTION_CLASS_K21 => {
-            Some("K21")
-        },
-
-        _ => {
-            None
-        }
-    }
+    InstructionExceptionClass.get(&ec).map(|x| *x)
 }
 
 bitflags! {
@@ -360,6 +212,13 @@ bitflags! {
         const ZYDIS_ATTRIB_HAS_OPERANDSIZE = zydis::gen::ZYDIS_ATTRIB_HAS_OPERANDSIZE as u64;
         const ZYDIS_ATTRIB_HAS_ADDRESSSIZE = zydis::gen::ZYDIS_ATTRIB_HAS_ADDRESSSIZE as u64;
     }
+}
+
+lazy_static! {
+    static ref InstructionAttribute: std::collections::HashMap<InstructionAttributeFlag, &'static str> = {
+        let hm = std::collections::HashMap::new();
+        hm
+    };
 }
 
 // fn ZydisInstructionAttributesGetStrings(atts: zydis::gen::ZydisInstructionAttributes) -> Vec<&'static str> {
