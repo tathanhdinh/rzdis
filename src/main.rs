@@ -1,3 +1,4 @@
+#![feature(stdsimd)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
@@ -268,7 +269,21 @@ fn main() {
         (zydis::gen::ZYDIS_ADDRESS_WIDTH_64, zydis::gen::ZYDIS_MACHINE_MODE_LONG_64)
     };
 
-    let formatter = zydis::Formatter::new(zydis::gen::ZYDIS_FORMATTER_STYLE_INTEL).unwrap();
+    let mut formatter = zydis::Formatter::new(zydis::gen::ZYDIS_FORMATTER_STYLE_INTEL).unwrap();
+    unsafe {
+        // let mut fm = &formatter as *mut zydis::gen::ZydisFormatter; 
+        // let fm = &formatter as *mut zydis::gen::ZydisFormatter;
+        // let mut fm = &formatter as *mut zydis::Formatter;
+        let fm: *mut zydis::Formatter = &mut formatter;
+        // let fm = fm as *mut zydis::gen::ZydisFormatter;
+        // let a = &mut formatter as *mut zydis::gen::ZydisFormatter;
+        // zydis::gen::ZydisFormatterSetProperty(fm as *mut zydis::gen::ZydisFormatter,
+        //                                       zydis::gen::ZYDIS_ADDR_FORMAT_RELATIVE_SIGNED as zydis::gen::ZydisFormatterProperty, 
+        //                                       zydis::gen::ZYDIS_TRUE as zydis::gen::ZydisUPointer);
+        zydis::gen::ZydisFormatterSetProperty(fm as *mut zydis::gen::ZydisFormatter,
+                                              zydis::gen::ZYDIS_FORMATTER_PROP_ADDR_FORMAT as zydis::gen::ZydisFormatterProperty, 
+                                              zydis::gen::ZYDIS_ADDR_FORMAT_RELATIVE_SIGNED as zydis::gen::ZydisUPointer);
+    };
     let decoder = zydis::Decoder::new(disasm_mode, address_width).unwrap();
 
     let base_address = if matches.is_present(ARGUMENT_BASE) {
@@ -298,7 +313,8 @@ fn main() {
 
         let mut disasm_results: Vec<_> = Vec::new();
         for (mut ins, ins_address) in decoder.instruction_iterator(&opcode, base_address) {
-            if let Ok(formatted_ins) = formatter.format_instruction(&mut ins, 30, None) {
+            // println!("{}", "test");
+            if let Ok(formatted_ins) = formatter.format_instruction(&mut ins, 50, None) {
                 // let ins_opcode = ins.data[0..ins.length];
                 // let data = ins.data.into_iter().take(ins.length as usize);
                 // let data = data[0..3];
