@@ -21,17 +21,106 @@ static ARGUMENT_BASE: &'static str = "base address";
 static ARGUMENT_MODE: &'static str = "disassembling mode";
 static ARGUMENT_DETAIL: &'static str = "show instruction details";
 
+// pub struct AAA {
+//     abc: u32,
+// }
+
+// macro_rules! create_instruction_encoding_map {
+//     // (general $x:ident, $y:ident) => {
+//     //     lazy_static! {
+//     //         static ref InstructionEncodingMap:
+//     //             std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, &'static str> = {
+//     //                 hashmap! {
+//     //                     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x => stringtify!($x),
+//     //                     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$y => stringtify!($y),
+//     //                 }
+//     //             };
+//     //     }
+//     // }
+//     ($( $x:ident ),*) => {
+//         // let mut InstructionEncodingMap = 
+//         //     std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, &'static str>::new();
+//         let mut tmp = 3;
+//     //     lazy_static! {
+//     //         static ref InstructionEncodingsdf: 
+//     //     std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
+//     //                               &'static str> = {
+//     //     // let mut hm = std::collections::HashMap::new();
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
+//     //     hashmap! {
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => "invalid",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => "default",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => "3DNow",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => "XOP",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => "VEX",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => "EVEX",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => "EVEX",
+//     //                             $(
+//     //                     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_A => "a",
+//     //                 )*
+//     //     }
+//     // };
+//         // };
+
+
+//         // lazy_static! {
+//         //     $(
+//         //         println!("{}", stringify!($x));
+//         //     )*
+//         // }
+
+//         let tmp = hashmap! {
+//             $(
+//                 // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x => stringify!($x),
+//                 stringify!($x) => stringify!(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x),
+//             )*
+            
+//         }
+        
+        
+//         // lazy_static! {
+//         //     static ref InstructionEncodingMap:
+//         //     std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, &'static str> = {
+//         //         hashmap! {
+//         //             $(
+//         //                 zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x => stringify!($x),
+//         //             )*
+//         //         }
+//         //     };
+//         // }
+//     };
+
+//     ($( $x:expr ),*) => {
+//         let mut tmp = Vec::new();
+//         $(
+//             tmp.push($x);
+//         )*
+//         tmp
+//     }
+// }
+
+// macro_rules! vvec {
+//     ($( $x:expr ),*) => {
+//         let mut tmp = Vec::new;
+//         $(
+//             temp_vec.push($x);
+//         )*
+//         temp_vec
+//     };
+// }
+
+// create_instruction_encoding_map!["abc", "def"];
+
 lazy_static! {
-    static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
-                                                                    &'static str> = {
-        // let mut hm = std::collections::HashMap::new();
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
+    static ref InstructionEncoding: 
+        std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
+                                  &'static str> = {
         hashmap! {
             zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => "invalid",
             zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => "default",
@@ -50,60 +139,23 @@ pub trait ZydisInstructionEncodingMethods {
 
 impl ZydisInstructionEncodingMethods for zydis::gen::ZydisInstructionEncodings {
     fn get_string(self) -> Option<&'static str> {
-        InstructionEncodingMethod.get(&self).map(|x| *x)
-        // match InstructionEncodingMethod.get(&self) {
-        //     Some(x) => Some(*x),
-        //     None => None
-        // }
-        // match self {
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => {
-        //         Some("invalid")
-        //     },
-            
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => {
-        //         Some("default")
-        //     },
-            
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => {
-        //         Some("3DNow")
-        //     },
-            
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => {
-        //         Some("XOP")
-        //     },
-
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => {
-        //         Some("VEX")
-        //     },
-
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => {
-        //         Some("EVEX")
-        //     },
-
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => {
-        //         Some("MVEX")
-        //     },
-
-        //     _ => {
-        //         None
-        //     }
-        // }
+        InstructionEncoding.get(&self).map(|x| *x)
     }
 }
 
 lazy_static! {
     static ref InstructionOpcodeMapMethod: std::collections::HashMap<zydis::gen::ZydisOpcodeMaps, 
                                                                      &'static str> = {
-        let mut hm = std::collections::HashMap::new();
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT, "default");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F, "0F");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F38, "0F38");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F3A, "0F3A");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F0F, "0F0F");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOP8, "XOP8");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOP9, "XOP9");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOPA, "XOPA");
-        hm
+        hashmap! {
+            zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT => "default",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F => "0F",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F38 => "0F38",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F3A => "0F3A",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F0F => "0F0F",
+            zydis::gen::ZYDIS_OPCODE_MAP_XOP8 => "XOP8",
+            zydis::gen::ZYDIS_OPCODE_MAP_XOP9 => "XOP9",
+            zydis::gen::ZYDIS_OPCODE_MAP_XOPA => "XOPA",
+        }
     };
 }
 
@@ -118,7 +170,9 @@ impl ZydisInstructionOpcodeMapMethods for zydis::gen::ZydisOpcodeMaps {
 }
 
 lazy_static! {
-    static ref InstructionExceptionClass: std::collections::HashMap<zydis::gen::ZydisExceptionClasses, &'static str> = {
+    static ref InstructionExceptionClass: 
+        std::collections::HashMap<zydis::gen::ZydisExceptionClasses, 
+                                  &'static str> = {
         let mut hm = std::collections::HashMap::new();
         hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE, "None");
         hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1, "SSE1");
@@ -226,6 +280,7 @@ lazy_static! {
 // }
 
 fn main() {
+
     let matches = clap::App::new(APPLICATION_NAME)
         .version(APPLICATION_VERSION)
         .author(APPLICATION_AUTHOR)
