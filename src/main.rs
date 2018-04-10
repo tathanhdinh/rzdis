@@ -25,14 +25,6 @@ static ARGUMENT_DETAIL: &'static str = "show instruction details";
 lazy_static! {
     static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
                                                                     &'static str> = {
-        // let mut hm = std::collections::HashMap::new();
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
-        // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
         hashmap! {
             zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => "invalid",
             zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => "default",
@@ -52,43 +44,6 @@ pub trait ZydisInstructionEncodingMethods {
 impl ZydisInstructionEncodingMethods for zydis::gen::ZydisInstructionEncodings {
     fn get_string(self) -> Option<&'static str> {
         InstructionEncodingMethod.get(&self).map(|x| *x)
-        // match InstructionEncodingMethod.get(&self) {
-        //     Some(x) => Some(*x),
-        //     None => None
-        // }
-        // match self {
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => {
-        //         Some("invalid")
-        //     },
-            
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => {
-        //         Some("default")
-        //     },
-            
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => {
-        //         Some("3DNow")
-        //     },
-            
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => {
-        //         Some("XOP")
-        //     },
-
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => {
-        //         Some("VEX")
-        //     },
-
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => {
-        //         Some("EVEX")
-        //     },
-
-        //     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => {
-        //         Some("MVEX")
-        //     },
-
-        //     _ => {
-        //         None
-        //     }
-        // }
     }
 }
 
