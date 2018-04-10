@@ -6,8 +6,10 @@ authors = ["tathanhdinh"]
 [dependencies]
 # zydis = "*"
 zydis = { path = "../zydis-rs" }
-clap = "*"
-tabwriter = "*"
+# zydis = { git = "https://github.com/zyantific/zydis-rs.git" }
+clap = { git = "https://github.com/kbknapp/clap-rs.git" }
+failure = { git = "https://github.com/rust-lang-nursery/failure.git" }
+tabwriter = { git = "https://github.com/BurntSushi/tabwriter.git" }
 bitflags = "*"
 lazy_static = "*"
 maplit = "*"

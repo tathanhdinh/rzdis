@@ -9,6 +9,7 @@ extern crate tabwriter;
 #[macro_use] extern crate bitflags;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate maplit;
+#[macro_use] extern crate failure;
 
 use std::io::Write;
 
@@ -22,9 +23,106 @@ static ARGUMENT_BASE: &'static str = "base address";
 static ARGUMENT_MODE: &'static str = "disassembling mode";
 static ARGUMENT_DETAIL: &'static str = "show instruction details";
 
+// pub struct AAA {
+//     abc: u32,
+// }
+
+// macro_rules! create_instruction_encoding_map {
+//     // (general $x:ident, $y:ident) => {
+//     //     lazy_static! {
+//     //         static ref InstructionEncodingMap:
+//     //             std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, &'static str> = {
+//     //                 hashmap! {
+//     //                     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x => stringtify!($x),
+//     //                     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$y => stringtify!($y),
+//     //                 }
+//     //             };
+//     //     }
+//     // }
+//     ($( $x:ident ),*) => {
+//         // let mut InstructionEncodingMap = 
+//         //     std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, &'static str>::new();
+//         let mut tmp = 3;
+//     //     lazy_static! {
+//     //         static ref InstructionEncodingsdf: 
+//     //     std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
+//     //                               &'static str> = {
+//     //     // let mut hm = std::collections::HashMap::new();
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID, "invalid");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT, "default");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW, "3DNow");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP, "XOP");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX, "VEX");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX, "EVEX");
+//     //     // hm.insert(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX, "MVEX");
+//     //     hashmap! {
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => "invalid",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => "default",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_3DNOW => "3DNow",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_XOP => "XOP",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_VEX => "VEX",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_EVEX => "EVEX",
+//     //         // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_MVEX => "EVEX",
+//     //                             $(
+//     //                     zydis::gen::ZYDIS_INSTRUCTION_ENCODING_A => "a",
+//     //                 )*
+//     //     }
+//     // };
+//         // };
+
+
+//         // lazy_static! {
+//         //     $(
+//         //         println!("{}", stringify!($x));
+//         //     )*
+//         // }
+
+//         let tmp = hashmap! {
+//             $(
+//                 // zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x => stringify!($x),
+//                 stringify!($x) => stringify!(zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x),
+//             )*
+            
+//         }
+        
+        
+//         // lazy_static! {
+//         //     static ref InstructionEncodingMap:
+//         //     std::collections::HashMap<zydis::gen::ZydisInstructionEncodings, &'static str> = {
+//         //         hashmap! {
+//         //             $(
+//         //                 zydis::gen::ZYDIS_INSTRUCTION_ENCODING_$x => stringify!($x),
+//         //             )*
+//         //         }
+//         //     };
+//         // }
+//     };
+
+//     ($( $x:expr ),*) => {
+//         let mut tmp = Vec::new();
+//         $(
+//             tmp.push($x);
+//         )*
+//         tmp
+//     }
+// }
+
+// macro_rules! vvec {
+//     ($( $x:expr ),*) => {
+//         let mut tmp = Vec::new;
+//         $(
+//             temp_vec.push($x);
+//         )*
+//         temp_vec
+//     };
+// }
+
+// create_instruction_encoding_map!["abc", "def"];
+
 lazy_static! {
-    static ref InstructionEncodingMethod: std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
-                                                                    &'static str> = {
+    static ref InstructionEncoding: 
+        std::collections::HashMap<zydis::gen::ZydisInstructionEncodings,
+                                  &'static str> = {
         hashmap! {
             zydis::gen::ZYDIS_INSTRUCTION_ENCODING_INVALID => "invalid",
             zydis::gen::ZYDIS_INSTRUCTION_ENCODING_DEFAULT => "default",
@@ -43,23 +141,24 @@ pub trait ZydisInstructionEncodingMethods {
 
 impl ZydisInstructionEncodingMethods for zydis::gen::ZydisInstructionEncodings {
     fn get_string(self) -> Option<&'static str> {
-        InstructionEncodingMethod.get(&self).map(|x| *x)
+        InstructionEncoding.get(&self).map(|x| *x)
     }
 }
 
 lazy_static! {
-    static ref InstructionOpcodeMapMethod: std::collections::HashMap<zydis::gen::ZydisOpcodeMaps, 
-                                                                     &'static str> = {
-        let mut hm = std::collections::HashMap::new();
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT, "default");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F, "0F");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F38, "0F38");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F3A, "0F3A");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_0F0F, "0F0F");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOP8, "XOP8");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOP9, "XOP9");
-        hm.insert(zydis::gen::ZYDIS_OPCODE_MAP_XOPA, "XOPA");
-        hm
+    static ref InstructionOpcodeMapMethod: 
+        std::collections::HashMap<zydis::gen::ZydisOpcodeMaps, 
+                                  &'static str> = {
+        hashmap! {
+            zydis::gen::ZYDIS_OPCODE_MAP_DEFAULT => "default",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F => "0F",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F38 => "0F38",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F3A => "0F3A",
+            zydis::gen::ZYDIS_OPCODE_MAP_0F0F => "0F0F",
+            zydis::gen::ZYDIS_OPCODE_MAP_XOP8 => "XOP8",
+            zydis::gen::ZYDIS_OPCODE_MAP_XOP9 => "XOP9",
+            zydis::gen::ZYDIS_OPCODE_MAP_XOPA => "XOPA",
+        }
     };
 }
 
@@ -74,48 +173,69 @@ impl ZydisInstructionOpcodeMapMethods for zydis::gen::ZydisOpcodeMaps {
 }
 
 lazy_static! {
-    static ref InstructionExceptionClass: std::collections::HashMap<zydis::gen::ZydisExceptionClasses, &'static str> = {
-        let mut hm = std::collections::HashMap::new();
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE, "None");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1, "SSE1");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2, "SSE2");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3, "SSE3");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4, "SSE4");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5, "SSE5");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7, "SSE7");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1, "AVX1");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2, "AVX2");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3, "AVX3");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5, "AVX4");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6, "AVX6");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7, "AVX7");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8, "AVX8");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11, "AVX11");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12, "AVX12");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1, "E1");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF, "E1NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2, "E2");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF, "E2NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3, "E3");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF, "E3NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4, "E4");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF, "E4NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5, "E5");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF, "E5NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6, "E6");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF, "E6NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM, "E7NM");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128, "E7NM128");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF, "E9NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10, "E10");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF, "E10NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11, "E6");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF, "E6NF");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12, "E12");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP, "E12NP");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K20, "K20");
-        hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K21, "K21");
-        hm
+    static ref InstructionExceptionClass: 
+        std::collections::HashMap<zydis::gen::ZydisExceptionClasses, 
+                                  &'static str> = {
+        hashmap! {
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE => "None",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1 => "SSE1",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2 => "SSE2",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3 => "SSE3",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4 => "SSE4",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5 => "SSE5",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7 => "SSE7",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1 => "AVX1",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2 => "AVX2",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3 => "AVX3",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX4 => "AVX4",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5 => "AVX5",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6 => "AVX6",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7 => "AVX7",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8 => "AVX8",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11 => "AVX11",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12 => "AVX12",
+        }
+        // let mut hm = std::collections::HashMap::new();
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE, "None");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1, "SSE1");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2, "SSE2");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3, "SSE3");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4, "SSE4");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5, "SSE5");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7, "SSE7");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1, "AVX1");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2, "AVX2");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3, "AVX3");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5, "AVX4");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6, "AVX6");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7, "AVX7");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8, "AVX8");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11, "AVX11");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12, "AVX12");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1, "E1");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF, "E1NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2, "E2");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF, "E2NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3, "E3");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF, "E3NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4, "E4");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF, "E4NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5, "E5");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF, "E5NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6, "E6");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF, "E6NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM, "E7NM");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128, "E7NM128");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF, "E9NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10, "E10");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF, "E10NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11, "E6");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF, "E6NF");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12, "E12");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP, "E12NP");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K20, "K20");
+        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K21, "K21");
+        // hm
     };
 }
 
@@ -182,6 +302,12 @@ lazy_static! {
 // }
 
 fn main() {
+    if let Err(err) = run() {
+        println!("{}", err)
+    }
+}
+
+fn run() -> Result<(), failure::Error> {
     let matches = clap::App::new(APPLICATION_NAME)
         .version(APPLICATION_VERSION)
         .author(APPLICATION_AUTHOR)
@@ -248,8 +374,7 @@ fn main() {
             base
         }
         else {
-            println!("{}", "bad base address");
-            return;
+            return Err(format_err!("bad base address"))
         }
     }
     else {
@@ -334,10 +459,12 @@ fn main() {
         let disasm_results = disasm_results.join("\r\n");
 
         let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
-        writeln!(&mut tw, "{}", disasm_results).unwrap();
-        tw.flush().unwrap();
+        writeln!(&mut tw, "{}", disasm_results)?;
+        tw.flush()?;
+
+        Ok(())
     }
     else {
-        println!("{}", "bad input hex opcode");
+        Err(format_err!("bad opcode"))
     }
 }
