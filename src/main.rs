@@ -526,7 +526,8 @@ fn run() -> Result<(), failure::Error> {
     for line in written_strs {
         let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
         let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
-        println!("{}", escaped);
+        // println!("{}", escaped);
+        writeln!(&mut std::io::stdout(), "{}", escaped)?;
     }
 
     Ok(())
