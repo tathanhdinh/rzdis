@@ -10,6 +10,9 @@ zydis = { path = "../zydis-rs" }
 clap = { git = "https://github.com/kbknapp/clap-rs.git" }
 failure = { git = "https://github.com/rust-lang-nursery/failure.git" }
 tabwriter = { git = "https://github.com/BurntSushi/tabwriter.git" }
+# syntect = { git = "https://github.com/trishume/syntect.git" }
+syntect = { path = "../syntect" }
 bitflags = "*"
 lazy_static = "*"
 maplit = "*"
+pager = "*"

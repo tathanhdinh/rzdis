@@ -4,6 +4,8 @@
 
 extern crate zydis;
 extern crate tabwriter;
+extern crate syntect;
+extern crate pager;
 
 #[macro_use] extern crate clap;
 #[macro_use] extern crate bitflags;
@@ -18,8 +20,8 @@ static APPLICATION_VERSION: &'static str = "0.1.0";
 static APPLICATION_AUTHOR: &'static str = "TA Thanh Dinh <tathanhdinh@gmail.com>";
 static APPLICATION_ABOUT: &'static str = "A x86 disassembler";
 
-static ARGUMENT_OPCODE: &'static str = "x86 opcode";
-static ARGUMENT_FILE: &'static str = "input file";
+static ARGUMENT_BINARY_CODE: &'static str = "x86 binary code";
+static ARGUMENT_BINARY_FILE: &'static str = "x68 binary input file";
 static ARGUMENT_BASE: &'static str = "base address";
 static ARGUMENT_MODE: &'static str = "disassembling mode";
 static ARGUMENT_DETAIL: &'static str = "show instruction details";
@@ -195,48 +197,30 @@ lazy_static! {
             zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8 => "AVX8",
             zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11 => "AVX11",
             zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12 => "AVX12",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E1 => "E1",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF => "E1NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E2 => "E2",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF => "E2NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E3 => "E3",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF => "E3NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E4 => "E4",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF => "E4NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E5 => "E5",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF => "E5NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E6 => "E6",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF => "E6NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM => "E7NM",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128 => "E7NM128",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF => "E9NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E10 => "E10",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF => "E10NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E11 => "E6",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF => "E6NF",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E12 => "E12",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP => "E12NP",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_K20 => "K20",
+            zydis::gen::ZYDIS_EXCEPTION_CLASS_K21 => "K21",
         }
-        // let mut hm = std::collections::HashMap::new();
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_NONE, "None");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE1, "SSE1");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE2, "SSE2");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE3, "SSE3");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE4, "SSE4");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE5, "SSE5");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_SSE7, "SSE7");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX1, "AVX1");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX2, "AVX2");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX3, "AVX3");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX5, "AVX4");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX6, "AVX6");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX7, "AVX7");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX8, "AVX8");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX11, "AVX11");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_AVX12, "AVX12");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1, "E1");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E1NF, "E1NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2, "E2");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E2NF, "E2NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3, "E3");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E3NF, "E3NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4, "E4");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E4NF, "E4NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5, "E5");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E5NF, "E5NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6, "E6");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E6NF, "E6NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM, "E7NM");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E7NM128, "E7NM128");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E9NF, "E9NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10, "E10");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E10NF, "E10NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11, "E6");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E11NF, "E6NF");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12, "E12");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_E12NP, "E12NP");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K20, "K20");
-        // hm.insert(zydis::gen::ZYDIS_EXCEPTION_CLASS_K21, "K21");
-        // hm
     };
 }
 
@@ -341,11 +325,20 @@ lazy_static! {
     };
 }
 
-// fn ZydisInstructionAttributesGetStrings(atts: zydis::gen::ZydisInstructionAttributes) -> Vec<&'static str> {
-
-// }
+fn ZydisInstructionAttributesGetStrings(atts: zydis::gen::ZydisInstructionAttributes) -> Vec<&'static str> {
+    let mut att_strs = Vec::new();
+    let attributes = InstructionAttributeFlag::from_bits_truncate(atts);
+    for attr in InstructionAttribute.keys() {
+        if attributes.contains(*attr) {
+            att_strs.push(*InstructionAttribute.get(attr).unwrap());
+        }
+    }
+    att_strs
+}
 
 fn main() {
+    pager::Pager::with_pager("less -R").setup();
+
     if let Err(err) = run() {
         println!("{}", err)
     }
@@ -356,14 +349,14 @@ fn run() -> Result<(), failure::Error> {
         .version(APPLICATION_VERSION)
         .author(APPLICATION_AUTHOR)
         .about(APPLICATION_ABOUT)
-        .arg(clap::Arg::with_name(ARGUMENT_OPCODE)
-                .required_unless(ARGUMENT_FILE)
+        .arg(clap::Arg::with_name(ARGUMENT_BINARY_CODE)
+                .required_unless(ARGUMENT_BINARY_FILE)
                 .index(1))
-        .arg(clap::Arg::with_name(ARGUMENT_FILE)
+        .arg(clap::Arg::with_name(ARGUMENT_BINARY_FILE)
                 .short("f")
                 .long("file")
                 .takes_value(true)
-                .conflicts_with(ARGUMENT_OPCODE))
+                .conflicts_with(ARGUMENT_BINARY_CODE))
         .arg(clap::Arg::with_name(ARGUMENT_BASE)
                 .short("b")
                 .long("base")
@@ -429,12 +422,12 @@ fn run() -> Result<(), failure::Error> {
     let detail_level = matches.occurrences_of(ARGUMENT_DETAIL);
 
     let mut binary_code = Vec::new();
-    if matches.is_present(ARGUMENT_FILE) {
-        let mut input_file = std::fs::File::open(matches.value_of(ARGUMENT_FILE).unwrap())?;
+    if matches.is_present(ARGUMENT_BINARY_FILE) {
+        let mut input_file = std::fs::File::open(matches.value_of(ARGUMENT_BINARY_FILE).unwrap())?;
         input_file.read_to_end(&mut binary_code)?;
     }
     else {
-        let native_code = matches.value_of(ARGUMENT_OPCODE).unwrap(); // should not panic
+        let native_code = matches.value_of(ARGUMENT_BINARY_CODE).unwrap(); // should not panic
         binary_code = native_code.split_whitespace().map(|c| u8::from_str_radix(c, 16)).collect::<Result<Vec<_>, _>>()?
     };
     
@@ -483,14 +476,15 @@ fn run() -> Result<(), failure::Error> {
                     disasm_results.push(format!("\t\t\texception class:\t{}", exception_class));
 
                     
-                    let mut attr_string = Vec::new();
-                    let attributes = InstructionAttributeFlag::from_bits(ins.attributes).ok_or_else(|| format_err!("Export directory not found"))?;
-                    for attr in InstructionAttribute.keys() {
-                        if attributes.contains(*attr) {
-                            attr_string.push(format!("{}", InstructionAttribute.get(attr).unwrap()));
-                        }
-                    }
-                    disasm_results.push(format!("\t\t\tattributes:\t{}", attr_string.join(",")));
+                    // let mut attr_string = Vec::new();
+                    // let attributes = InstructionAttributeFlag::from_bits(ins.attributes).ok_or_else(|| format_err!("Export directory not found"))?;
+                    // for attr in InstructionAttribute.keys() {
+                    //     if attributes.contains(*attr) {
+                    //         attr_string.push(format!("{}", InstructionAttribute.get(attr).unwrap()));
+                    //     }
+                    // }
+                    let att_strs = ZydisInstructionAttributesGetStrings(ins.attributes);
+                    disasm_results.push(format!("\t\t\tattributes:\t{}", att_strs.join(",")));
                 },
 
                 2 => {
@@ -508,9 +502,32 @@ fn run() -> Result<(), failure::Error> {
     }
     let disasm_results = disasm_results.join("\r\n");
 
-    let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
+    // let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
+    let mut tw = tabwriter::TabWriter::new(vec![]).padding(4);
     writeln!(&mut tw, "{}", disasm_results)?;
     tw.flush()?;
+
+    let written_strs = String::from_utf8(tw.into_inner()?)?;
+    let written_strs = written_strs.split("\r\n").collect::<Vec<&str>>();
+    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    let theme = &theme_set.themes["Solarized (dark)"];
+    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_nonewlines();
+    // syntax_set.load_syntaxes("/public/syntaxes", false);
+    let syntax = syntax_set.find_syntax_by_extension("asm").unwrap_or_else(|| syntax_set.find_syntax_plain_text());
+    // let syntax = syntax_set.find_syntax_by_name("Nasm Assembly").unwrap_or_else(|| { syntax_set.find_syntax_plain_text() });
+    // let syntax = syntax_set.find_syntax_by_name("x86_64 Assembly").unwrap_or_else(|| { syntax_set.find_syntax_plain_text() });
+    let mut highlighter = syntect::easy::HighlightLines::new(syntax, theme);
+        // if let Some(syntax) = syntax_set.find_syntax_by_extension("asm") {
+        //     syntax
+        // }
+        // else {
+        //     syntax_set.find_syntax_plain_text()
+        // };
+    for line in written_strs {
+        let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
+        let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
+        println!("{}", escaped);
+    }
 
     Ok(())
 }
