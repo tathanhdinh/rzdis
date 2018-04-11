@@ -1,17 +1,17 @@
-#![feature(stdsimd)]
+// #![feature(stdsimd)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
 extern crate zydis;
-// #[macro_use]
-extern crate clap;
 extern crate tabwriter;
+
+#[macro_use] extern crate clap;
 #[macro_use] extern crate bitflags;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate maplit;
 #[macro_use] extern crate failure;
 
-use std::io::Write;
+use std::io::{Read, Write};
 
 static APPLICATION_NAME: &'static str = "rzdis";
 static APPLICATION_VERSION: &'static str = "0.1.0";
@@ -19,6 +19,7 @@ static APPLICATION_AUTHOR: &'static str = "TA Thanh Dinh <tathanhdinh@gmail.com>
 static APPLICATION_ABOUT: &'static str = "A x86 disassembler";
 
 static ARGUMENT_OPCODE: &'static str = "x86 opcode";
+static ARGUMENT_FILE: &'static str = "input file";
 static ARGUMENT_BASE: &'static str = "base address";
 static ARGUMENT_MODE: &'static str = "disassembling mode";
 static ARGUMENT_DETAIL: &'static str = "show instruction details";
@@ -259,8 +260,8 @@ bitflags! {
         const ZYDIS_ATTRIB_ACCEPTS_REP = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REP as u64;
         const ZYDIS_ATTRIB_ACCEPTS_REPE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPE as u64;
         const ZYDIS_ATTRIB_ACCEPTS_REPZ = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPZ as u64;
-        const ZYDIS_ATTRIB_ACCEPTS_REPPNE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPZ as u64;
-        const ZYDIS_ATTRIB_ACCEPTS_REPNZ = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPZ as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REPNE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPNE as u64;
+        const ZYDIS_ATTRIB_ACCEPTS_REPNZ = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_REPNZ as u64;
         const ZYDIS_ATTRIB_ACCEPTS_BOUND = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_BOUND as u64;
         const ZYDIS_ATTRIB_ACCEPTS_XACQUIRE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_XACQUIRE as u64;
         const ZYDIS_ATTRIB_ACCEPTS_XRELEASE = zydis::gen::ZYDIS_ATTRIB_ACCEPTS_XRELEASE as u64;
@@ -291,9 +292,52 @@ bitflags! {
 }
 
 lazy_static! {
-    static ref InstructionAttribute: std::collections::HashMap<InstructionAttributeFlag, &'static str> = {
-        let hm = std::collections::HashMap::new();
-        hm
+    static ref InstructionAttribute: 
+        std::collections::HashMap<InstructionAttributeFlag, 
+                                  &'static str> = {
+        hashmap! {
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_MODRM => "HAS_MODRM",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SIB => "HAS_SIB",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_REX => "HAS_REX",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_XOP => "HAS_XOP",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_VEX => "HAS_VEX",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_EVEX => "HAS_EVEX",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_MVEX => "HAS_MVEX",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_IS_RELATIVE => "IS_RELATIVE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_IS_PRIVILEGED => "IS_PRIVILEGED",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_IS_FAR_BRANCH => "IS_FAR_BRANCH",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_LOCK => "ACCEPTS_LOCK",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_REPE => "ACCEPTS_REPE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_REPZ => "ACCEPTS_REPZ",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_REPNE => "ACCEPTS_REPNE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_REPNZ => "ACCEPTS_REPNZ",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_BOUND => "ACCEPTS_BOUNDS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_XACQUIRE => "ACCEPTS_XACQUIRE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_XRELEASE => "ACCEPTS_XRELEASE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_HLE_WITHOUT_LOCK => "ACCEPTS_HLE_WITHOUT_LOCK",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_BRANCH_HINTS => "ACCEPTS_BRANCH_HINTS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_ACCEPTS_SEGMENT => "ACCEPTS_SEGMENT",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_LOCK => "HAS_LOCK",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_REP => "HAS_REP",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_REPE => "HAS_REPE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_REPZ => "HAS_REPZ",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_REPNE => "HAS_REPNE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_REPNZ => "HAS_REPNZ",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_BOUND => "HAS_BOUND",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_XACQUIRE => "HAS_XACQUIRE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_XRELEASE => "HAS_XRELEASE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_BRANCH_NOT_TAKEN => "HAS_BRANCH_NOT_TAKEN",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_BRANCH_TAKEN => "HAS_BRANCH_TAKEN",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT => "HAS_SEGMENT",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT_CS => "HAS_SEGMENT_CS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT_SS => "HAS_SEGMENT_SS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT_DS => "HAS_SEGMENT_DS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT_ES => "HAS_SEGMENT_ES",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT_FS => "HAS_SEGMENT_FS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_SEGMENT_GS => "HAS_SEGMENT_GS",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_OPERANDSIZE => "HAS_OPERANDSIZE",
+            InstructionAttributeFlag::ZYDIS_ATTRIB_HAS_ADDRESSSIZE => "ADDRESSSIZE"
+        }
     };
 }
 
@@ -313,23 +357,28 @@ fn run() -> Result<(), failure::Error> {
         .author(APPLICATION_AUTHOR)
         .about(APPLICATION_ABOUT)
         .arg(clap::Arg::with_name(ARGUMENT_OPCODE)
-             .required(true)
-             .index(1))
+                .required_unless(ARGUMENT_FILE)
+                .index(1))
+        .arg(clap::Arg::with_name(ARGUMENT_FILE)
+                .short("f")
+                .long("file")
+                .takes_value(true)
+                .conflicts_with(ARGUMENT_OPCODE))
         .arg(clap::Arg::with_name(ARGUMENT_BASE)
-             .short("b")
-             .long("base")
-             .takes_value(true)
-             .default_value("0"))
+                .short("b")
+                .long("base")
+                .takes_value(true)
+                .default_value("0"))
         .arg(clap::Arg::with_name(ARGUMENT_MODE)
-             .short("m")
-             .long("mode")
-             .takes_value(true)
-             .default_value("x64")
-             .possible_values(&["x64", "x32"]))
+                .short("m")
+                .long("mode")
+                .takes_value(true)
+                .default_value("x64")
+                .possible_values(&["x64", "x32"]))
         .arg(clap::Arg::with_name(ARGUMENT_DETAIL)
-             .short("v")
-             .long("verbose")
-             .multiple(true))
+                .short("v")
+                .long("verbose")
+                .multiple(true))
         .get_matches();
 
     let (address_width, disasm_mode) = if matches.is_present(ARGUMENT_MODE) {
@@ -369,102 +418,99 @@ fn run() -> Result<(), failure::Error> {
 
     let base_address = if matches.is_present(ARGUMENT_BASE) {
         // value_t!(matches, ARGUMENT_BASE, u64).unwrap_or(0x0)
-        let base = matches.value_of(ARGUMENT_BASE).unwrap(); // should not panic
-        if let Ok(base) = u64::from_str_radix(base, 16) {
-            base
-        }
-        else {
-            return Err(format_err!("bad base address"))
-        }
+        // let base = matches.value_of(ARGUMENT_BASE).unwrap(); // should not panic
+
+        u64::from_str_radix(matches.value_of(ARGUMENT_BASE).unwrap(), 16)?
     }
     else {
         0x0
     };
 
-    let opcode = matches.value_of(ARGUMENT_OPCODE).unwrap(); // should not panic
-    // let opcode = opcode.split_whitespace().collect::<Vec<&str>>();
-    // let opcode: Result<Vec<_>, _> = opcode.split_whitespace().map(|oc| { u8::from_str_radix(oc, 16) }).collect();
-
     let detail_level = matches.occurrences_of(ARGUMENT_DETAIL);
-    
-    if let Ok(opcode) = opcode.split_whitespace()
-        .map(|oc| { u8::from_str_radix(oc, 16) })
-        .collect::<Result<Vec<_>, _>>() {
 
-        let mut disasm_results: Vec<_> = Vec::new();
-        for (mut ins, ins_address) in decoder.instruction_iterator(&opcode, base_address) {
-            // println!("{}", "test");
-            if let Ok(formatted_ins) = formatter.format_instruction(&mut ins, 50, None) {
-                // let ins_opcode = ins.data[0..ins.length];
-                // let data = ins.data.into_iter().take(ins.length as usize);
-                // let data = data[0..3];
-                let ins_opcode = ins.data
-                    .into_iter()
-                    .take(ins.length as usize)
-                    .map(|opc| format!("{:02x}", opc))
-                    .collect::<Vec<_>>()
-                    .join(" ");
-
-                let disasm_result = format!("0x{:x}\t{}\t{}\t", ins_address, ins_opcode, formatted_ins);
-                disasm_results.push(disasm_result);
-
-                match detail_level {
-                    1 => {
-                        let mnemonic = zydis::mnemonic::ZydisMnemonicMethods::get_string(ins.mnemonic as zydis::gen::ZydisMnemonics).unwrap();
-                        let encoding = ZydisInstructionEncodingMethods::get_string(ins.encoding as zydis::gen::ZydisInstructionEncodings).unwrap();
-                        let opcode_map = ZydisInstructionOpcodeMapMethods::get_string(ins.opcodeMap as zydis::gen::ZydisOpcodeMaps).unwrap();
-                        let opcode = ins.opcode;
-                        // let basic_info = format!("\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode);
-                        // disasm_results.push(basic_info);
-                        disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
-                        disasm_results.push(format!("\t\t\tlength:\t{}", ins.length));
-                        disasm_results.push(format!("\t\t\tstack width:\t{}", ins.stackWidth));
-                        disasm_results.push(format!("\t\t\toperand width:\t{}", ins.operandWidth));
-                        disasm_results.push(format!("\t\t\taddress width:\t{}", ins.addressWidth));
-
-                        let category = unsafe { 
-                            std::ffi::CStr::from_ptr(zydis::gen::ZydisCategoryGetString(ins.meta.category)).to_string_lossy()
-                        };
-                        disasm_results.push(format!("\t\t\tcategory:\t{}", category));
-
-                        let isa_set = unsafe {
-                            std::ffi::CStr::from_ptr(zydis::gen::ZydisISASetGetString(ins.meta.isaSet)).to_string_lossy()
-                        };
-                        disasm_results.push(format!("\t\t\tisa set:\t{}", isa_set));
-
-                        let isa_ext = unsafe {
-                            std::ffi::CStr::from_ptr(zydis::gen::ZydisISAExtGetString(ins.meta.isaExt)).to_string_lossy()
-                        };
-                        disasm_results.push(format!("\t\t\tisa extension:\t{}", isa_ext));
-
-                        let exception_class = ZydisExceptionClassGetString(ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses).unwrap();
-                        disasm_results.push(format!("\t\t\texception class:\t{}", exception_class));
-
-                        let attributes = ins.attributes;
-                    },
-
-                    2 => {
-
-                    }
-
-                    _ => {
-
-                    }
-                }
-            }
-            else {
-                break;
-            }
-        }
-        let disasm_results = disasm_results.join("\r\n");
-
-        let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
-        writeln!(&mut tw, "{}", disasm_results)?;
-        tw.flush()?;
-
-        Ok(())
+    let mut binary_code = Vec::new();
+    if matches.is_present(ARGUMENT_FILE) {
+        let mut input_file = std::fs::File::open(matches.value_of(ARGUMENT_FILE).unwrap())?;
+        input_file.read_to_end(&mut binary_code)?;
     }
     else {
-        Err(format_err!("bad opcode"))
+        let native_code = matches.value_of(ARGUMENT_OPCODE).unwrap(); // should not panic
+        binary_code = native_code.split_whitespace().map(|c| u8::from_str_radix(c, 16)).collect::<Result<Vec<_>, _>>()?
+    };
+    
+
+    let mut disasm_results: Vec<_> = Vec::new();
+    for (mut ins, ins_address) in decoder.instruction_iterator(&binary_code, base_address) {
+        if let Ok(formatted_ins) = formatter.format_instruction(&mut ins, 50, None) {
+            let ins_opcode = ins.data
+                .into_iter()
+                .take(ins.length as usize)
+                .map(|opc| format!("{:02x}", opc))
+                .collect::<Vec<_>>()
+                .join(" ");
+
+            let disasm_result = format!("0x{:x}\t{}\t{}\t", ins_address, ins_opcode, formatted_ins);
+            disasm_results.push(disasm_result);
+
+            match detail_level {
+                1 => {
+                    let mnemonic = zydis::mnemonic::ZydisMnemonicMethods::get_string(ins.mnemonic as zydis::gen::ZydisMnemonics).unwrap();
+                    let encoding = ZydisInstructionEncodingMethods::get_string(ins.encoding as zydis::gen::ZydisInstructionEncodings).unwrap();
+                    let opcode_map = ZydisInstructionOpcodeMapMethods::get_string(ins.opcodeMap as zydis::gen::ZydisOpcodeMaps).unwrap();
+                    let opcode = ins.opcode;
+                    disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
+                    disasm_results.push(format!("\t\t\tlength:\t{}", ins.length));
+                    disasm_results.push(format!("\t\t\tstack width:\t{}", ins.stackWidth));
+                    disasm_results.push(format!("\t\t\toperand width:\t{}", ins.operandWidth));
+                    disasm_results.push(format!("\t\t\taddress width:\t{}", ins.addressWidth));
+
+                    let category = unsafe { 
+                        std::ffi::CStr::from_ptr(zydis::gen::ZydisCategoryGetString(ins.meta.category)).to_string_lossy()
+                    };
+                    disasm_results.push(format!("\t\t\tcategory:\t{}", category));
+
+                    let isa_set = unsafe {
+                        std::ffi::CStr::from_ptr(zydis::gen::ZydisISASetGetString(ins.meta.isaSet)).to_string_lossy()
+                    };
+                    disasm_results.push(format!("\t\t\tisa set:\t{}", isa_set));
+
+                    let isa_ext = unsafe {
+                        std::ffi::CStr::from_ptr(zydis::gen::ZydisISAExtGetString(ins.meta.isaExt)).to_string_lossy()
+                    };
+                    disasm_results.push(format!("\t\t\tisa extension:\t{}", isa_ext));
+
+                    let exception_class = ZydisExceptionClassGetString(ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses).unwrap();
+                    disasm_results.push(format!("\t\t\texception class:\t{}", exception_class));
+
+                    
+                    let mut attr_string = Vec::new();
+                    let attributes = InstructionAttributeFlag::from_bits(ins.attributes).ok_or_else(|| format_err!("Export directory not found"))?;
+                    for attr in InstructionAttribute.keys() {
+                        if attributes.contains(*attr) {
+                            attr_string.push(format!("{}", InstructionAttribute.get(attr).unwrap()));
+                        }
+                    }
+                    disasm_results.push(format!("\t\t\tattributes:\t{}", attr_string.join(",")));
+                },
+
+                2 => {
+
+                }
+
+                _ => {
+
+                }
+            }
+        }
+        else {
+            break;
+        }
     }
+    let disasm_results = disasm_results.join("\r\n");
+
+    let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
+    writeln!(&mut tw, "{}", disasm_results)?;
+    tw.flush()?;
+
+    Ok(())
 }
