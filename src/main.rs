@@ -337,11 +337,29 @@ fn ZydisInstructionAttributesGetStrings(atts: zydis::gen::ZydisInstructionAttrib
 }
 
 fn main() {
-    pager::Pager::with_pager("less -R").setup();
+    pager::Pager::with_pager("less -R -X").setup();
 
-    if let Err(err) = run() {
-        println!("{}", err)
+    match run() {
+        Ok(()) => {},
+        Err(ref err) => {
+            if let Some(ref _err) = err.downcast_ref::<std::io::Error>() {
+                std::process::exit(0);
+            }
+            else {
+                println!("Error: {}", err);
+            }
+        }
     }
+
+    // if let Err(ref err) = run() {
+    //     if err.kind() == io::ErrorKind::BrokenPipe {
+    //         std::process::exit(0);
+    //     }
+    //     else {
+    //         println!("{}", err)
+    //     }
+        
+    // }
 }
 
 fn run() -> Result<(), failure::Error> {
@@ -374,23 +392,24 @@ fn run() -> Result<(), failure::Error> {
                 .multiple(true))
         .get_matches();
 
-    let (address_width, disasm_mode) = if matches.is_present(ARGUMENT_MODE) {
-        match matches.value_of(ARGUMENT_MODE).unwrap() {
-            "x32" => {
-                (zydis::gen::ZYDIS_ADDRESS_WIDTH_32, zydis::gen::ZYDIS_MACHINE_MODE_LONG_COMPAT_32)
-            },
-            "x64" => {
-                (zydis::gen::ZYDIS_ADDRESS_WIDTH_64, zydis::gen::ZYDIS_MACHINE_MODE_LONG_64)
-            },
-            _ => {
-                unreachable!();
+    let (address_width, disasm_mode) = 
+        if matches.is_present(ARGUMENT_MODE) {
+            match matches.value_of(ARGUMENT_MODE).unwrap() {
+                "x32" => {
+                    (zydis::gen::ZYDIS_ADDRESS_WIDTH_32, zydis::gen::ZYDIS_MACHINE_MODE_LONG_COMPAT_32)
+                },
+                "x64" => {
+                    (zydis::gen::ZYDIS_ADDRESS_WIDTH_64, zydis::gen::ZYDIS_MACHINE_MODE_LONG_64)
+                },
+                _ => {
+                    unreachable!();
+                }
             }
         }
-    }
-    else {
-        // default
-        (zydis::gen::ZYDIS_ADDRESS_WIDTH_64, zydis::gen::ZYDIS_MACHINE_MODE_LONG_64)
-    };
+        else {
+            // default
+            (zydis::gen::ZYDIS_ADDRESS_WIDTH_64, zydis::gen::ZYDIS_MACHINE_MODE_LONG_64)
+        };
 
     let mut formatter = zydis::Formatter::new(zydis::gen::ZYDIS_FORMATTER_STYLE_INTEL).unwrap();
     unsafe {
@@ -435,23 +454,24 @@ fn run() -> Result<(), failure::Error> {
     let mut disasm_results: Vec<_> = Vec::new();
     for (mut ins, ins_address) in decoder.instruction_iterator(&binary_code, base_address) {
         if let Ok(formatted_ins) = formatter.format_instruction(&mut ins, 50, None) {
-            let ins_opcode = ins.data
-                .into_iter()
-                .take(ins.length as usize)
-                .map(|opc| format!("{:02x}", opc))
-                .collect::<Vec<_>>()
-                .join(" ");
+            let ins_opcode = ins.data.into_iter()
+                                .take(ins.length as usize)
+                                .map(|opc| format!("{:02x}", opc))
+                                .collect::<Vec<_>>()
+                                .join(" ");
 
             let disasm_result = format!("0x{:x}\t{}\t{}\t", ins_address, ins_opcode, formatted_ins);
             disasm_results.push(disasm_result);
 
-            match detail_level {
-                1 => {
-                    let mnemonic = zydis::mnemonic::ZydisMnemonicMethods::get_string(ins.mnemonic as zydis::gen::ZydisMnemonics).unwrap();
-                    let encoding = ZydisInstructionEncodingMethods::get_string(ins.encoding as zydis::gen::ZydisInstructionEncodings).unwrap();
-                    let opcode_map = ZydisInstructionOpcodeMapMethods::get_string(ins.opcodeMap as zydis::gen::ZydisOpcodeMaps).unwrap();
-                    let opcode = ins.opcode;
-                    disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
+            if detail_level != 0 {
+                let mnemonic = zydis::mnemonic::ZydisMnemonicMethods::get_string(ins.mnemonic as zydis::gen::ZydisMnemonics).ok_or_else(|| format_err!("invalid mnemonic"))?;
+                let encoding = ZydisInstructionEncodingMethods::get_string(ins.encoding as zydis::gen::ZydisInstructionEncodings).ok_or_else(|| format_err!("invalid encoding"))?;
+                let opcode_map = ZydisInstructionOpcodeMapMethods::get_string(ins.opcodeMap as zydis::gen::ZydisOpcodeMaps).ok_or_else(|| format_err!("invalid opcode map"))?;
+                let opcode = ins.opcode;
+                disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
+
+                if detail_level > 1 {
+                    // disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
                     disasm_results.push(format!("\t\t\tlength:\t{}", ins.length));
                     disasm_results.push(format!("\t\t\tstack width:\t{}", ins.stackWidth));
                     disasm_results.push(format!("\t\t\toperand width:\t{}", ins.operandWidth));
@@ -472,29 +492,72 @@ fn run() -> Result<(), failure::Error> {
                     };
                     disasm_results.push(format!("\t\t\tisa extension:\t{}", isa_ext));
 
-                    let exception_class = ZydisExceptionClassGetString(ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses).unwrap();
+                    let exception_class = ZydisExceptionClassGetString(ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses).ok_or_else(|| format_err!("invalid exception class"))?;
                     disasm_results.push(format!("\t\t\texception class:\t{}", exception_class));
+                }
 
-                    
-                    // let mut attr_string = Vec::new();
-                    // let attributes = InstructionAttributeFlag::from_bits(ins.attributes).ok_or_else(|| format_err!("Export directory not found"))?;
-                    // for attr in InstructionAttribute.keys() {
-                    //     if attributes.contains(*attr) {
-                    //         attr_string.push(format!("{}", InstructionAttribute.get(attr).unwrap()));
-                    //     }
-                    // }
+                let category = unsafe { 
+                    std::ffi::CStr::from_ptr(zydis::gen::ZydisCategoryGetString(ins.meta.category)).to_string_lossy()
+                };
+                disasm_results.push(format!("\t\t\tcategory:\t{}", category));
+
+                if detail_level > 1 {
                     let att_strs = ZydisInstructionAttributesGetStrings(ins.attributes);
                     disasm_results.push(format!("\t\t\tattributes:\t{}", att_strs.join(",")));
-                },
-
-                2 => {
-
                 }
-
-                _ => {
-
-                }
+                
             }
+
+            // match detail_level {
+            //     1 => {
+            //         let mnemonic = zydis::mnemonic::ZydisMnemonicMethods::get_string(ins.mnemonic as zydis::gen::ZydisMnemonics).unwrap();
+            //         let encoding = ZydisInstructionEncodingMethods::get_string(ins.encoding as zydis::gen::ZydisInstructionEncodings).unwrap();
+            //         let opcode_map = ZydisInstructionOpcodeMapMethods::get_string(ins.opcodeMap as zydis::gen::ZydisOpcodeMaps).unwrap();
+            //         let opcode = ins.opcode;
+            //         disasm_results.push(format!("\t\t\tmnemonic:\t{} [encoding: {}, opcode map: {}, opcode: {:x}]", mnemonic, encoding, opcode_map, opcode));
+            //         disasm_results.push(format!("\t\t\tlength:\t{}", ins.length));
+            //         disasm_results.push(format!("\t\t\tstack width:\t{}", ins.stackWidth));
+            //         disasm_results.push(format!("\t\t\toperand width:\t{}", ins.operandWidth));
+            //         disasm_results.push(format!("\t\t\taddress width:\t{}", ins.addressWidth));
+
+            //         let category = unsafe { 
+            //             std::ffi::CStr::from_ptr(zydis::gen::ZydisCategoryGetString(ins.meta.category)).to_string_lossy()
+            //         };
+            //         disasm_results.push(format!("\t\t\tcategory:\t{}", category));
+
+            //         let isa_set = unsafe {
+            //             std::ffi::CStr::from_ptr(zydis::gen::ZydisISASetGetString(ins.meta.isaSet)).to_string_lossy()
+            //         };
+            //         disasm_results.push(format!("\t\t\tisa set:\t{}", isa_set));
+
+            //         let isa_ext = unsafe {
+            //             std::ffi::CStr::from_ptr(zydis::gen::ZydisISAExtGetString(ins.meta.isaExt)).to_string_lossy()
+            //         };
+            //         disasm_results.push(format!("\t\t\tisa extension:\t{}", isa_ext));
+
+            //         let exception_class = ZydisExceptionClassGetString(ins.meta.exceptionClass as zydis::gen::ZydisExceptionClasses).unwrap();
+            //         disasm_results.push(format!("\t\t\texception class:\t{}", exception_class));
+
+                    
+            //         // let mut attr_string = Vec::new();
+            //         // let attributes = InstructionAttributeFlag::from_bits(ins.attributes).ok_or_else(|| format_err!("Export directory not found"))?;
+            //         // for attr in InstructionAttribute.keys() {
+            //         //     if attributes.contains(*attr) {
+            //         //         attr_string.push(format!("{}", InstructionAttribute.get(attr).unwrap()));
+            //         //     }
+            //         // }
+            //         let att_strs = ZydisInstructionAttributesGetStrings(ins.attributes);
+            //         disasm_results.push(format!("\t\t\tattributes:\t{}", att_strs.join(",")));
+            //     },
+
+            //     2 => {
+
+            //     }
+
+            //     _ => {
+
+            //     }
+            // }
         }
         else {
             break;
